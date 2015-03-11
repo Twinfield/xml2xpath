@@ -10,35 +10,36 @@ Parser.prototype.parse = function(filename, caller_cb, options) {
         caller_cb = options;
         options = temp_cb;
     }
-    var path = [];
+    
     var xpaths = [];
-    var rootVisited = false;
+    
+    var state = {rootVisited: false, path:[]};
     
     var parser = new xml.SaxParser(function(cb) {
         cb.onStartElementNS(function(elem, attrs, prefix, uri, namespaces) {
 	
-	    var shouldCheck = self.shoudInclude(elem, attrs, prefix, uri, namespaces);
+	    var shouldCheck = self.shoudInclude(elem, attrs, prefix, uri, namespaces, state);
 
 	    if (!shouldCheck) return;
 
-            if (!rootVisited && options && options.skipRoot) { 
-                rootVisited = true;
+            if (!state.rootVisited && options && options.skipRoot) { 
+                state.rootVisited = true;
                 return;
             }
 
-            rootVisited = true;            
+            state.rootVisited = true;            
 
-            var name = self.getName(elem, attrs, prefix, uri, namespaces);
-            path.push(name);
+            var name = self.getName(elem, attrs, prefix, uri, namespaces, state);
+            state.path.push(name);
 
-            var p = path.join('/');
+            var p = state.path.join('/');
             if (xpaths.indexOf(p)==-1) {
                 xpaths.push(p);
             }
         });
         cb.onEndElementNS(function(elem, prefix, uri) {            
-            if (!self.shouldGoBack(elem, prefix, uri,options)) return;
-            path.pop();
+            if (!self.shouldGoBack(elem, prefix, uri, state)) return;
+            state.path.pop();
         });
         cb.onError(function(msg) {
             util.log('<ERROR>' + JSON.stringify(msg) + "</ERROR>");
@@ -54,10 +55,13 @@ Parser.prototype.parse = function(filename, caller_cb, options) {
 
 xsdParser = new Parser();
 
-xsdParser.shoudInclude = function(elem, attrs) {
-            return elem == 'element'&& attrs[0][0] == 'name';
+xsdParser.shoudInclude = function(elem, attrs, prefix, uri, namespaces, state) {
+            return elem == 'element'&& attrs[0][0] == 'name' && !state.afterRoot;
 }
-xsdParser.shouldGoBack = function(elem, attrs) {
+xsdParser.shouldGoBack = function(elem, attrs,uri, state) {
+            if (state.path.length==1) {
+                state.afterRoot = true;
+            }
             return elem == 'element';
 }
 
