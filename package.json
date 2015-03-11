@@ -1,0 +1,26 @@
+{
+  "name": "xsd2xpath",
+  "version": "0.0.0",
+  "description": "Generate XPaths from XSD",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Twinfield/xsd2xpath"
+  },
+  "keywords": [
+    "xsd",
+    "xpath"
+  ],
+  "author": "olostan@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Twinfield/xsd2xpath/issues"
+  },
+  "homepage": "https://github.com/Twinfield/xsd2xpath",
+  "dependencies": {
+    "node-xml": "^1.0.2"
+  }
+}
