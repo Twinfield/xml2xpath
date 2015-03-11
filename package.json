@@ -1,6 +1,6 @@
 {
   "name": "xsd2xpath",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Generate XPaths from XSD",
   "main": "parse.js",
   "scripts": {
