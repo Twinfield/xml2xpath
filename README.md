@@ -10,7 +10,7 @@ To parse XSD, you need
 ```javascript
 var xpathParser = require('xml2xpath');
 
-xpathParser.parseXsd('example.xsd', function(xpaths) {
+xpathParser.parseXsd('example.xsd', function(err, xpaths) {
 	console.log(xpaths.join('\n'));		
 });
 
@@ -30,7 +30,7 @@ To parse XML, you need
 ```javascript
 var xpathParser = require('xml2xpath');
 
-xpathParser.parseXml('books.xml', function(xpaths) {
+xpathParser.parseXml('books.xml', function(err, xpaths) {
 	console.log(xpaths.join('\n'));		
 });
 
