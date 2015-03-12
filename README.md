@@ -10,7 +10,7 @@ To parse XSD, you need
 ```javascript
 var xpathParser = require('xml2xpath');
 
-xpathParser.parseXsd('example.xsd', {skipRoot: true}, function(xpaths) {
+xpathParser.parseXsd('example.xsd', function(xpaths) {
 	console.log(xpaths.join('\n'));		
 });
 
@@ -30,7 +30,7 @@ To parse XML, you need
 ```javascript
 var xpathParser = require('xml2xpath');
 
-xpathParser.parseXml('books.xml', {skipRoot: true}, function(xpaths) {
+xpathParser.parseXml('books.xml', function(xpaths) {
 	console.log(xpaths.join('\n'));		
 });
 
@@ -46,8 +46,3 @@ catalog/book/price
 catalog/book/publish_date  
 catalog/book/description
 ```
-
-## Any other XMLs
-
-Check `parse.js` how to extend Parser to support other XML formats
-

@@ -1,87 +1,74 @@
-var util = require('util');
-var xml = require("node-xml");
+var dom = require("xmldom").DOMParser;
+var fs = require("fs");
+var xpath = require("xpath");
 
-
-function Parser() {}
-Parser.prototype.parse = function(filename, caller_cb, options) {
-    var self = this;
-    if (options) {
-        var temp_cb = caller_cb;
-        caller_cb = options;
-        options = temp_cb;
-    }
-    
-    var xpaths = [];
-    
-    var state = {rootVisited: false, path:[]};
-    
-    var parser = new xml.SaxParser(function(cb) {
-        cb.onStartElementNS(function(elem, attrs, prefix, uri, namespaces) {
-	
-	    var shouldCheck = self.shoudInclude(elem, attrs, prefix, uri, namespaces, state);
-
-	    if (!shouldCheck) return;
-
-            if (!state.rootVisited && options && options.skipRoot) { 
-                state.rootVisited = true;
-                return;
+function parseXml(fileName, cb) {
+    fs.readFile(fileName,{},function(err,data) {
+        if (err) {
+            cb(err);
+            return;
+        }
+        var doc = new dom().parseFromString(data.toString());
+        var result = [];
+        var path = [];
+        var inspect = function(elem) {
+            path.push(elem.nodeName);
+            var xpath = path.join('/');
+            if (result.indexOf(xpath)==-1) result.push(xpath);
+            for (var i = 0; i < elem.childNodes.length; i++) {
+                var child = elem.childNodes[i];
+                if (child.nodeType==1) inspect(child);
             }
-
-            state.rootVisited = true;            
-
-            var name = self.getName(elem, attrs, prefix, uri, namespaces, state);
-            state.path.push(name);
-
-            var p = state.path.join('/');
-            if (xpaths.indexOf(p)==-1) {
-                xpaths.push(p);
-            }
-        });
-        cb.onEndElementNS(function(elem, prefix, uri) {            
-            if (!self.shouldGoBack(elem, prefix, uri, state)) return;
-            state.path.pop();
-        });
-        cb.onError(function(msg) {
-            util.log('<ERROR>' + JSON.stringify(msg) + "</ERROR>");
-        });
-        cb.onEndDocument(function() {
-          caller_cb(xpaths);
-        });
+            path.pop();
+        };
+        inspect(doc.documentElement);
+        cb(null,result);
     });
-
-    return parser.parseFile(filename);
-
 }
 
-xsdParser = new Parser();
+var xsdSelect = xpath.useNamespaces({"xsd": "http://www.w3.org/2001/XMLSchema"});
 
-xsdParser.shoudInclude = function(elem, attrs, prefix, uri, namespaces, state) {
-            return elem == 'element'&& attrs[0][0] == 'name' && !state.afterRoot;
-}
-xsdParser.shouldGoBack = function(elem, attrs,uri, state) {
-            if (state.path.length==1) {
-                state.afterRoot = true;
+function parseXsd(fileName,cb) {
+    fs.readFile(fileName,{},function(err,data) {
+        if (err) {
+            cb(err);
+            return;
+        }
+        var doc = new dom().parseFromString(data.toString());
+
+        var getXPaths = function(element,path) {
+            var pushed = false;
+            var result = [];
+            if (element.localName=='element') {
+                var name = element.getAttribute('name');
+                path.push(name);
+                pushed = true;
+                var xpath = path.join('/');
+                result.push(xpath);
+                var type = element.getAttribute('type');
+                if (type) {
+                    var typeDef = xsdSelect("//xsd:schema/xsd:complexType[@name='" + type + "']", doc);
+                    if (typeDef && typeDef.length==1) {
+                        var typePaths = getXPaths(typeDef[0], path);
+                        result = result.concat(typePaths);
+                    }
+                }
             }
-            return elem == 'element';
+            for (var i = 0; i < element.childNodes.length; i++) {
+                var child = element.childNodes[i];
+                if (child.nodeType==1) {
+                    var inner = getXPaths(child,path);
+                    if (inner&&inner.length>0) result = result.concat(inner);
+                }
+            }
+            if (pushed) path.pop();
+            return result;
+        };
+        var elements = xsdSelect("//xsd:schema/xsd:element", doc);
+        var result = getXPaths(elements[0],[]);
+        cb(null,result);
+    });
 }
 
-xsdParser.getName = function(elem, attrs) {
-	    return attrs[0][1];
-}
-
-xmlParser = new Parser();
-
-xmlParser.shoudInclude = function(elem, attrs) {
-	return true;
-}
-xmlParser.shouldGoBack = function(elem, attrs) {
-	return true;
-}
-
-xmlParser.getName = function(elem, attrs) {
-	return elem;
-}
-
-
-module.exports.parseXsd = xsdParser.parse.bind(xsdParser);
-module.exports.parseXml = xmlParser.parse.bind(xmlParser);
+module.exports.parseXsd = parseXsd;
+module.exports.parseXml = parseXml;

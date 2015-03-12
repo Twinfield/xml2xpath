@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/Twinfield/xsd2xpath",
   "dependencies": {
-    "node-xml": "^1.0.2"
+    "xmldom": "^0.1.19",
+    "xpath": "0.0.9"
   }
 }

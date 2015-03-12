@@ -1,5 +1,8 @@
 var xpathParser = require('../parse');
 
-xpathParser.parseXml('books.xml', {skipRoot: false}, function(xpaths) {
-	console.log(xpaths.join('\n'));		
+xpathParser.parseXml('books.xml', function(err,xpaths) {
+	if (err)
+		console.error(err);
+	else
+		console.log(xpaths.join('\n'));
 });
